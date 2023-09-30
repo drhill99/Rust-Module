@@ -6,7 +6,7 @@ use serde::{Serialize, Deserialize};
 
 struct Person {
     name: String,
-    age: u32,
+    age: i16,
 }
 
 // impl Person {
@@ -19,7 +19,7 @@ struct Person {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 // #[derive(Debug)]
 struct Account {
-    id: u32,
+    id: i16,
     account_holder: String,
     balance: f32,
     // transaction_history: Vec<String>,
@@ -34,20 +34,20 @@ fn save_account_to_json(data: &Account) -> io::Result<()> {
 }
 
 
-fn get_user_integer() -> u32 {
-    let mut _int: u32 = 0;
+fn get_user_integer() -> i16 {
+    let mut _int: i16 = 0;
     let mut user_input_int = String::new();
     io::stdin()
         .read_line(&mut user_input_int)
         .expect("failed to read input");
     let trimmed_input = user_input_int.trim();  
-    let parsed_user_input_age: Result<u32,std::num::ParseIntError> = trimmed_input.parse();
+    let parsed_user_input_age: Result<i16,std::num::ParseIntError> = trimmed_input.parse();
     match parsed_user_input_age {
         Ok(parsed_number) => {
             // println!("parsed_number: {}", parsed_number);
             _int = parsed_number;
         }
-        Err(u32) => {
+        Err(_i16) => {
             println!("failed to parse the string to integer.");
         }
     }    
@@ -67,7 +67,7 @@ fn get_user_float() -> f32 {
             // println!("parsed_number: {}", parsed_number);
             _flt = parsed_number;
         }
-        Err(f32) => {
+        Err(_f32) => {
             println!("failed to parse the string to integer.");
         }
     }    
@@ -93,7 +93,7 @@ fn create_person() -> Person {
     let name:&str = &get_user_string();
     print!("Enter age: ");
     let _ = io::stdout().flush();
-    let _age: u32 = get_user_integer();
+    let _age: i16 = get_user_integer();
     let person = Person {
         name:String::from(name),
         age:_age,
@@ -115,6 +115,7 @@ fn create_account() -> Account {
         account_holder:String::from(name),
         balance: _balance,
     };
+    let _ = save_account_to_json(&account);
     return account;    
 }
 
@@ -166,25 +167,38 @@ fn load_all_json_files() -> io::Result<Vec<Account>> {
 
     Ok(accounts)
 }
-
-fn find_account(accounts: &[Account]) -> Option<Account> {
-    print!("Account ID to search for: ");
-    let _ = io::stdout().flush();
-    let account_id = get_user_integer();
-    // accounts.iter().find(|account| account.id==account_id).clone();
-    if let Some(destination_account) = accounts.iter().find(|account| account.id == account_id){
-        // let return_account = destination_account.clone();
-        // return return_account;
-        Some(destination_account.clone())
-    } else {
-        None
+fn find_account(accounts: Vec<Account>) -> Account{
+        // iterage through vector of accounts to find target account based on struct member data
+        fn iterate_through_accounts(accounts: &[Account]) -> Option<Account> {
+            print!("Account ID to search for: ");
+            let _ = io::stdout().flush();
+            let account_id = get_user_integer();
+            // accounts.iter().find(|account| account.id==account_id).clone();
+            if let Some(destination_account) = accounts.iter().find(|account| account.id == account_id){
+                // let return_account = destination_account.clone();
+                // return return_account;
+                Some(destination_account.clone())
+            } else {
+                None
+            }
+        }
+    
+    let find_account_result = iterate_through_accounts(&accounts);
+    let mut account: Account = Account { id: 0, account_holder: String::new(), balance:0.0 };
+    match find_account_result {
+        Some(target_account) => {
+            account = target_account;
+        }
+        None => {
+            println!("Account not found");
+        }
     }
+    return account;
 }
-fn main() {
-  
 
+fn program_startup() -> Vec<Account> {
     let account_results = load_all_json_files();
-
+    
     let accounts = match account_results {
         Ok(accounts) => {
             accounts
@@ -194,7 +208,35 @@ fn main() {
             Vec::new()  // Return an empty vector or handle the error in another way
         }
     };  
+    return accounts;
+}
 
+fn main() {
+    let mut accounts = program_startup();
+    let account = find_account(accounts.clone());
+    let mut user_selection: i16 = -1;
+    loop {
+        println!("1. Create New Account.");
+        println!("2. lookup Account.");
+        println!("3. Print Account Details.");
+        println!("0. Quit.");
+
+        user_selection = get_user_integer();
+
+        if user_selection == 0 {
+            break
+        } else if user_selection == 1 {
+            let account: Account = create_account();
+            accounts.push(account);
+        } else if user_selection == 2 {
+            break
+        } else if user_selection == 3 {
+            break
+        } else {
+            println!("invalid input.");
+            break
+        }
+    }
     // for account in accounts {
     //     println!("account holder: {}", account.account_holder);
     //     println!("account id: {}", account.id);
@@ -209,16 +251,6 @@ fn main() {
     // println!("id: {}", accounts[1].id);
     // println!("balance: {}", accounts[1].balance);
 
-    let find_account_result = find_account(&accounts);
-    let mut account: Account = Account { id: 0, account_holder: String::new(), balance:0.0 };
-    match find_account_result {
-        Some(target_account) => {
-            account = target_account;
-        }
-        None => {
-            println!("Account not found");
-        }
-    }
 
     println!("name: {}", account.account_holder);
     println!("id: {}", account.id);
