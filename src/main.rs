@@ -2,12 +2,9 @@ use std::io::{self, Write};
 use std::fs::{self,File};
 use std::io::prelude::*;
 use serde::{Serialize, Deserialize};
-// use::std::io::{self, Write};
 
-struct Person {
-    name: String,
-    age: i16,
-}
+
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 struct BasicAccountMembers {
     account_holder: String,
@@ -19,13 +16,7 @@ impl BasicAccountMembers {
         self.id += 1;
     }
 }
-// impl Person {
-//     fn new(age: u32) -> Person {
-//         Person {
-//             age
-//         }
-//     }
-// }
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 // #[derive(Debug)]
 struct Account {
@@ -48,12 +39,10 @@ impl Account {
         let withdraw_amount = get_user_float();
         self.balance -= withdraw_amount;
     }
-
-
 }
 fn save_account_to_json(data: &Account) -> io::Result<()> {
-    let json_string = serde_json::to_string(data)?;
-    let file_name = format!("AccountJsonfiles\\{}.json", data.account_holder);
+    let json_string = serde_json::to_string(data)?;    
+    let file_name = format!("AccountJsonfiles\\{}{}.json", data.account_holder, data.id.to_string());
     let mut file = File::create(file_name)?;
     file.write_all(json_string.as_bytes())?;
 
@@ -124,19 +113,6 @@ fn get_user_string() -> String {
     trimmed_input
 }
 
-fn create_person() -> Person {
-    let name:&str = &get_user_string();
-    print!("Enter age: ");
-    let _ = io::stdout().flush();
-    let _age: i16 = get_user_integer();
-    let person = Person {
-        name:String::from(name),
-        age:_age,
-    };
-
-    return person;
-}
-
 fn create_account(account_id: i16) -> Account {
     // let person: Person = create_person();
     print!("Enter account holders name: ");
@@ -184,7 +160,7 @@ fn load_account_id_tracker_to_vector() -> io::Result<Vec<BasicAccountMembers>> {
             println!("loaded existing json");
             current_account_id.push(current_id_struct);
         }
-        Err(err) => {
+        Err(_err) => {
             println!("No existing json, loaded default json");
             let basic_account_members: BasicAccountMembers = BasicAccountMembers { account_holder:String::from("current_id"),id: 0 };
             current_account_id.push(basic_account_members);
@@ -277,10 +253,13 @@ fn delete_account(accounts: &mut Vec<Account> ) -> std::io::Result <()> {
     print!("Enter name of account holder to delete: ");
     let _ = io::stdout().flush();
     let account_holder_to_delete = get_user_string();
+    print!("Enter id of account to delete: ");
+    let _ = io::stdout().flush();
+    let account_id_to_delete = get_user_integer();
     // remove account from Accounts Struct
     accounts.retain(|account| account.account_holder != account_holder_to_delete);
     // remove json file
-    let file_name_to_delete = format!("AccountJsonfiles\\{}.json", account_holder_to_delete);
+    let file_name_to_delete = format!("AccountJsonfiles\\{}{}.json", account_holder_to_delete, account_id_to_delete.to_string());
     let _ = fs::remove_file(file_name_to_delete);
 
     Ok(())
@@ -334,9 +313,10 @@ fn menu(accounts: &mut Vec<Account>, current_id: &mut Vec<BasicAccountMembers>) 
             }
         // display all account id and holder
         } else if user_selection == 6 { 
+            println!("Total number of accounts: {}", accounts.len());
             for account in &mut *accounts {
                 println!("Account ID: {} Account holder: {} ", account.id, account.account_holder);
-                println!()
+                // println!();
             }
         // error
         } else {
@@ -347,13 +327,9 @@ fn menu(accounts: &mut Vec<Account>, current_id: &mut Vec<BasicAccountMembers>) 
 }
 fn main() {
     let (mut accounts, mut current_id) = program_startup();
-
     let _ = menu(&mut accounts, &mut current_id);
 
-    // To Do
-    // enable deletion of accounts from list, and from file *DONE*
-    // implement struct methods
-    
+  
 
 
 
